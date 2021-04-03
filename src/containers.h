@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <stack>
+#include "MyClasses/MyDir.h"
 
 using StringUnorderedMap = std::unordered_map<std::string,std::string>;
 using StringUnorderedSet = std::unordered_set<std::string>;
@@ -33,5 +34,6 @@ using BoolStack          = std::stack<bool>;
 using BoolVector         = std::vector<bool>;
 using IntMap             = std::map<std::string,int>;
 using IntVector          = std::vector<int>;
+using PahtSet            = std::set<MyDir>;
 
 #endif

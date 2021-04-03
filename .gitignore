@@ -10,7 +10,6 @@
 /packages/rpm/doxygen.spec
 *.idb
 *.pdb
-
 /doxygen_docs
 /doxygen.tag
 /build*
@@ -18,3 +17,6 @@
 tags
 
 .idea
+doc/*
+*.log
+*.user

@@ -330,7 +330,7 @@ QString QFileInfo::dirPath( bool absPath ) const
 	return QString::fromLatin1(".");
     } else {
 	if ( pos == 0 )
-	    return QString::fromLatin1( "/" );
+        return QString::fromLatin1( "/" );
 	return s.left( pos );
     }
 }
