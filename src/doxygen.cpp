@@ -9654,13 +9654,13 @@ static int readDir(QFileInfo *fi,
             bool errorIfNotExist,
             bool recursive,
             StringUnorderedSet *killSet,
-            StringSet *paths
+            PathSet *paths
            )
 {
-  QCString dirName = fi->absFilePath().utf8();
+  Directory dirName = fi->absFilePath().utf8();
   if (paths && !dirName.isEmpty())
   {
-    paths->insert(dirName.data());
+    paths->insert(MyDir(dirName.data()));
   }
   if (fi->isSymLink())
   {
