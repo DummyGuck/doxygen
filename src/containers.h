@@ -16,24 +16,28 @@
 #ifndef CONTAINERS_H
 #define CONTAINERS_H
 
-#include <vector>
-#include <string>
-#include <set>
 #include <map>
-#include <unordered_set>
-#include <unordered_map>
-#include <stack>
 #include <qdir.h>
+#include <set>
+#include <stack>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-using StringUnorderedMap = std::unordered_map<std::string,std::string>;
-using StringUnorderedSet = std::unordered_set<std::string>;
-using StringMap          = std::map<std::string,std::string>;
-using StringSet          = std::set<std::string>;
-using StringVector       = std::vector<std::string>;
-using BoolStack          = std::stack<bool>;
-using BoolVector         = std::vector<bool>;
-using IntMap             = std::map<std::string,int>;
-using IntVector          = std::vector<int>;
-using PathSet            = std::set<QDir>;
+static bool compByAbsPath = []( const QDir& first, const QDir& second ) {
+    return first.absPath() < second.absPath();
+};
+
+using StringUnorderedMap = std::unordered_map< std::string, std::string >;
+using StringUnorderedSet = std::unordered_set< std::string >;
+using StringMap = std::map< std::string, std::string >;
+using StringSet = std::set< std::string >;
+using StringVector = std::vector< std::string >;
+using BoolStack = std::stack< bool >;
+using BoolVector = std::vector< bool >;
+using IntMap = std::map< std::string, int >;
+using IntVector = std::vector< int >;
+using PathVector = std::vector< QDir>;
 
 #endif

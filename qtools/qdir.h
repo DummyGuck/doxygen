@@ -92,10 +92,11 @@ public:
           SortSpec   sortSpec = SortSpec( Name | IgnoreCase ),
           FilterSpec filterSpec = All );
     QDir( const QDir& );
-    QDir( const QCString& path)
+
+    /*QDir( const QCString& path )
         : QDir( QString( path.data() ) )
     {
-    }
+    }*/
 
     virtual ~QDir();
 
@@ -185,6 +186,7 @@ public:
     static bool    match( const QString& filter, const QString& fileName );
     static QString cleanDirPath( const QString& dirPath );
     static bool    isRelativePath( const QString& path );
+    bool           isFromEmpty() { return fromEmpty; }
 
 private:
     void         init();
@@ -201,6 +203,7 @@ private:
     SortSpec       sortS;
     uint           dirty : 1;
     uint           allDirs : 1;
+    bool           fromEmpty = false;
 };
 
 inline QString QDir::path() const

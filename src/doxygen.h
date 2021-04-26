@@ -84,7 +84,7 @@ class Doxygen
     static bool                      insideMainPage;
     static FileNameLinkedMap        *includeNameLinkedMap;
     static FileNameLinkedMap        *exampleNameLinkedMap;
-    static StringSet                 inputPaths;
+    static PathVector                inputPaths;
     static FileNameLinkedMap        *inputNameLinkedMap;
     static FileNameLinkedMap        *imageNameLinkedMap;
     static FileNameLinkedMap        *dotFileNameLinkedMap;
@@ -140,7 +140,7 @@ int readFileOrDirectory(const char *s,
                         bool recursive,
                         bool errorIfNotExist=TRUE,
                         StringUnorderedSet *killSet = 0,
-                        StringSet *paths = 0
+                        PathVector *paths = 0
                        );
 void copyAndFilterFile(const char *fileName,BufStr &dest);
 

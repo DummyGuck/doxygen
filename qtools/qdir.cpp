@@ -181,7 +181,10 @@ QDir::QDir( const QString& path, const QString& nameFilter, SortSpec sortSpec,
 {
     dPath = cleanDirPath( path );
     if ( dPath.isEmpty() )
+    {
         dPath = QString::fromLatin1( "." );
+        fromEmpty = true;
+    }
     nameFilt = nameFilter;
     if ( nameFilt.isEmpty() )
         nameFilt = QString::fromLatin1( "*" );
@@ -1113,7 +1116,7 @@ QString QDir::cleanDirPath( const QString& filePath )
         {
             upLevel++;
         }
-		else
+        else
         {
             if ( len != 0 && ( len != 1 || name.at( pos + 1 ) != '.' ) )
             {
@@ -1132,7 +1135,7 @@ QString QDir::cleanDirPath( const QString& filePath )
             newPath.insert( 0, QString::fromLatin1( "/.." ) );
         if ( !newPath.isEmpty() )
             newPath.remove( 0, 1 );
-        else
+		else
             newPath = QString::fromLatin1( "." );
 	}
 	else

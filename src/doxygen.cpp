@@ -16,6 +16,7 @@
 #include <qfileinfo.h>
 #include <qfile.h>
 #include <qdir.h>
+#include <qstringlist.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,7 +135,7 @@ GroupLinkedMap       *Doxygen::groupLinkedMap = 0;
 PageLinkedMap        *Doxygen::pageLinkedMap = 0;
 PageLinkedMap        *Doxygen::exampleLinkedMap = 0;
 StringMap             Doxygen::aliasMap;                     // aliases
-StringSet             Doxygen::inputPaths;
+PathVector            Doxygen::inputPaths;
 FileNameLinkedMap    *Doxygen::includeNameLinkedMap = 0;     // include names
 FileNameLinkedMap    *Doxygen::exampleNameLinkedMap = 0;     // examples
 FileNameLinkedMap    *Doxygen::imageNameLinkedMap = 0;       // images
@@ -9636,7 +9637,7 @@ static QCString resolveSymlink(QCString path)
 }
 
 static std::mutex g_pathsVisitedMutex;
-static StringUnorderedSet g_pathsVisited(1009);
+static QStringList g_pathsVisited;
 
 //----------------------------------------------------------------------------
 // Read all files matching at least one pattern in 'patList' in the
@@ -9654,24 +9655,25 @@ static int readDir(QFileInfo *fi,
             bool errorIfNotExist,
             bool recursive,
             StringUnorderedSet *killSet,
-            PathSet *paths
+            PathVector *paths
            )
 {
-  Directory dirName = fi->absFilePath().utf8();
-  if (paths && !dirName.isEmpty())
+  QDir dir(fi->absFilePath());
+  if (paths && !dir.isFromEmpty())
   {
-    paths->insert(MyDir(dirName.data()));
+    paths->push_back(dir);
   }
   if (fi->isSymLink())
   {
-    dirName = resolveSymlink(dirName.data());
-    if (dirName.isEmpty()) return 0;            // recursive symlink
+    if (resolveSymlink(dir.absPath().data()).isEmpty())
+        return 0;            // recursive symlink
 
     std::lock_guard<std::mutex> lock(g_pathsVisitedMutex);
-    if (g_pathsVisited.find(dirName.str())!=g_pathsVisited.end()) return 0; // already visited path
-    g_pathsVisited.insert(dirName.str());
+    if (g_pathsVisited.find(dir.absPath())!=g_pathsVisited.end())
+        return 0; // already visited path
+    g_pathsVisited.append(dir.absPath());
   }
-  QDir dir(dirName);
+
   dir.setFilter( QDir::Files | QDir::Dirs | QDir::Hidden );
   int totalSize=0;
   msg("Searching for files in directory %s\n", fi->absFilePath().data());
@@ -9752,62 +9754,68 @@ int readFileOrDirectory(const char *s,
                         bool recursive,
                         bool errorIfNotExist,
                         StringUnorderedSet *killSet,
-                        StringSet *paths
+                        PathVector *paths
                        )
 {
-  //printf("killSet count=%d\n",killSet ? (int)killSet->size() : -1);
-  // strip trailing slashes
-  if (s==0) return 0;
-  QCString fs = s;
-  char lc = fs.at(fs.length()-1);
-  if (lc=='/' || lc=='\\') fs = fs.left(fs.length()-1);
+     // strip trailing slashes
+    if (s==0) return 0;
+    QCString fs = s;
+    char lc = fs.at(fs.length()-1);
+    if (lc=='/' || lc=='\\') fs = fs.left(fs.length()-1);
 
-  QFileInfo fi(fs);
-  //printf("readFileOrDirectory(%s)\n",s);
-  int totalSize=0;
-  {
-    if (exclSet==0 || exclSet->find(fi.absFilePath().utf8().data())==exclSet->end())
+    QFileInfo fi(fs);
+    //printf("readFileOrDirectory(%s)\n",s);
+    int totalSize=0;
+    //{
+    if(exclSet != nullptr && exclSet->find(fi.absFilePath().utf8().data())==exclSet->end())
+        return 0;
+
+
+    //if (exclSet==0 || exclSet->find(fi.absFilePath().utf8().data())==exclSet->end())
+    //{
+    if (!fi.exists() || !fi.isReadable())
     {
-      if (!fi.exists() || !fi.isReadable())
-      {
         if (errorIfNotExist)
         {
           warn_uncond("source '%s' is not a readable file or directory... skipping.\n",s);
         }
-      }
-      else if (!Config_getBool(EXCLUDE_SYMLINKS) || !fi.isSymLink())
-      {
+        return 0;
+    }
+
+    if (!Config_getBool(EXCLUDE_SYMLINKS) || !fi.isSymLink())
+    {
         if (fi.isFile())
         {
-          QCString dirPath = fi.dirPath(TRUE).utf8();
-          QCString filePath = fi.absFilePath().utf8();
-          if (paths && !dirPath.isEmpty())
+          QDir dirPath (fi.dirPath(true));
+          //QCString filePath = fi.absFilePath().utf8();
+          QString filePath = fi.absFilePath();
+          if (paths && !dirPath.isFromEmpty())
           {
-            paths->insert(dirPath.data());
+            paths->push_back(dirPath);
           }
           //printf("killSet.find(%s)=%d\n",fi.absFilePath().data(),killSet.find(fi.absFilePath())!=killSet.end());
           if (killSet==0 || killSet->find(filePath.data())==killSet->end())
           {
-            totalSize+=fi.size()+fi.absFilePath().length()+4; //readFile(&fi,fiList,input);
-            //fiList->inSort(new FileInfo(fi));
+            totalSize+=fi.size()+filePath.length()+4;
             QCString name=fi.fileName().utf8();
-            //printf("New file %s\n",name.data());
+
             if (fnMap)
             {
-              std::unique_ptr<FileDef> fd { createFileDef(dirPath+"/",name) };
+              std::unique_ptr<FileDef> fd { createFileDef((dirPath.absPath()+"/").data(),name) };
               if (!name.isEmpty())
               {
-                FileName *fn = fnMap->add(name,filePath);
+                FileName *fn = fnMap->add(name,filePath.data());
                 fn->push_back(std::move(fd));
               }
             }
-            if (resultList || resultSet)
+            if (resultList != nullptr || resultSet != nullptr)
             {
               if (resultList) resultList->push_back(filePath.data());
               if (resultSet) resultSet->insert(filePath.data());
             }
 
-            if (killSet) killSet->insert(fi.absFilePath().utf8().data());
+            if (killSet != nullptr)
+                killSet->insert(filePath.data());
           }
         }
         else if (fi.isDir()) // readable dir
@@ -9816,9 +9824,9 @@ int readFileOrDirectory(const char *s,
               exclPatList,resultList,resultSet,errorIfNotExist,
               recursive,killSet,paths);
         }
-      }
     }
-  }
+    //}
+  //}
   return totalSize;
 }
 
